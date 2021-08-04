@@ -122,3 +122,85 @@ for (l in 1: length(df2$`Tasa de Recuperacion`)) {
   }
 }
 
+
+#**********************Valor numerico de LGD Original solo con fines de calculos***********************
+df2<-cbind(df2, "LGD" = 0)
+
+for (l in 1: length(df2$`Tasa de Recuperacion`)) {
+  df2$`LGD`[l] = (1 - df2$`Tasa de Recuperacion`[l])
+  if (df2$`LGD`[l] < 0){
+    df2$`LGD`[l] = 0
+    
+  }else{
+    df2$`LGD`[l] = round((1 - df2$`Tasa de Recuperacion`[l]),5) 
+  }
+}
+
+
+
+
+
+
+#*******************Se Crea la Columna PD (Probabilidad de Incumplimiento)***************************
+df2<-cbind(df2, PD = round (predict(modelo_de_prueba, type = "response"),5))
+
+#******************Calculamos la PÉRDIDA ESPERADA por Cliente ***************************************
+#**********************PE = EC.LGD.PD.M**************************************************************
+
+
+df2<-cbind(df2, "Perdida Esperada" = 0 )
+for (i in 1:length(df2$`Monto del credito`)){
+  df2$`Perdida Esperada`[i] =  round( (df2$`Saldo vigente`[i]*df2$M[i]* df2$`LGD`[i] *df2$PD[i]),4)
+  
+}
+
+
+#*****************************************CALCULO DE VaR*********************************************
+#*****************************************PARAMETRO RHO**********************************************
+df2<-cbind(df2, "Parametro RHO" = 0)
+for (i in 1:length(df2$PD)) {
+  df2$`Parametro RHO`[i] =round( (0.03*((1-exp(-35*df2$PD[i])))/(1-exp(-35)) 
+                                 + 0.16*((1-(1-exp(-35*df2$PD[i]))))/(1-exp(-35))),6)
+  
+}
+
+
+#**********************Valor Critico de la funcion de Distribucion************************************
+#*********************************Normal Estandar*****************************************************
+df2<-cbind(df2, "Inverso de la PD" = 0)
+for (i in 1:length(df2$PD)) {
+  df2$`Inverso de la PD`[i] = round( (qnorm(df2$PD[i],mean = 0, sd=1)),4)
+}
+
+
+
+#**********************************Inverso del 99.9%**************************************************
+df2<-cbind(df2,"Inverso del 99.9%" = 0)
+for (i in 1:length(df2$PD)) {
+  df2$`Inverso del 99.9%`[i] =round ( (qnorm(0.999,mean=0,sd=1)),4)
+}
+
+
+#*********************************CALCULO DE Pmax*****************************************************
+df2<-cbind(df2, "Probabilidad Maxima (Pmax)" = 0)
+for (i in 1:length(df2$PD)) {
+  df2$`Probabilidad Maxima (Pmax)`[i] = pnorm((1/(sqrt(1-df2$`Parametro RHO`[i]))*df2$`Inverso de la PD`[i] + 
+                                                 sqrt(df2$`Parametro RHO`[i]/(1-df2$`Parametro RHO`[i]))*df2$`Inverso del 99.9%`[i]),
+                                              mean = 0,sd=1)
+}
+
+
+#*********************************CALCULO FINAL DEL VaR***********************************************
+df2<-cbind(df2,"Valor en Riesgo" = 0)
+for (i in 1:length(df2$`Saldo vigente`)) {
+  df2$`Valor en Riesgo`[i] =round( (df2$`Saldo vigente`[i]*df2$LGD[i]*df2$`Probabilidad Maxima (Pmax)`[i]),2)
+}
+
+#*************************************CALCULO DE LA PERDIDA INESPERADA********************************
+#****************************************PI=VaR-PE****************************************************
+df2<-cbind(df2,"Perdida Inesperada" = 0)
+for (i in 1:length(df2$`Perdida Esperada`)) {
+  df2$`Perdida Inesperada`[i] = round( (df2$`Valor en Riesgo`[i] - df2$`Perdida Esperada`[i]),2)
+  
+}
+
