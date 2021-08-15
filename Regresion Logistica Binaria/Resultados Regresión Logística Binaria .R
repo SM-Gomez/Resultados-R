@@ -204,3 +204,8 @@ for (i in 1:length(df2$`Perdida Esperada`)) {
   
 }
 
+
+#************************************RESULTADOS CENTRALES*********************************************
+PE<-sum(df2$`Perdida Esperada`)
+VaR<-sum(df2$`Valor en Riesgo`)
+PI<-sum(df2$`Perdida Inesperada`)
