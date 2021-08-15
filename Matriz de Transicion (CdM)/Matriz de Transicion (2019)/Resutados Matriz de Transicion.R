@@ -6,6 +6,9 @@ library(tidyr)
 library(readxl)
 library(scales)
 
+
+#****************************************BASE DE DATOS 2019********************************************
+
 df<-read_xlsx("MT2019.xlsx")
 
 
@@ -130,7 +133,7 @@ MT<-data.frame(df$`Rango Incial`,df$`Rango Final`)
 
 
 #****************************CREANDO LA TABLA DINAMICA******************************
-install.packages("devtools")
+#install.packages("devtools")
 library(devtools)
 install_github("ramnathv/htmlwidgets")
 install_github("smartinsightsfromdata/rpivotTable")
@@ -141,4 +144,70 @@ rpivotTable(df, rows="Rango Inicial", col="Rango Final", aggregatorName="Average
 
 
 
+#***************************CALCULO DE LA MAXIMA MORA*************************************
+#***********************EL VECTOR MORA MAXIAMA ALMACENA LA MAYOR MORA********************* 
+#****************************COMPREDIDA DE FEBRERO-DICIEMBRE
+
+df<-cbind(df,"Mora Maxima" = 0)
+for (i in 1:length(df$`Dias de Mora Febrero`)) {
+  df$`Mora Maxima`[i] = max(c(df$`Dias de Mora Febrero`[i],df$`Dias de Mora Marzo`[i],
+                              df$`Dias de Mora Abril`[i],df$`Dias de Mora Mayo`[i],
+                              df$`Dias de Mora Junio`[i],df$`Dias de Mora Julio`[i],
+                              df$`Dias de Mora Agosto`[i],df$`Dias de Mora Septiembre`[i],
+                              df$`Dias de Mora Octubre`[i],df$`Dias de Mora Noviembre`[i],
+                              df$`Dias de Mora Diciembre`[i]))
+}
+
+#*****************************ASIGNANDOLE CATEGORIA A LA VARIABLES RANGO MAXIMO********************************
+df<-cbind(df,"Rango Maximo" = 0)
+
+for (i in 1:length(df$`Mora Maxima`)) {
+  if(df$`Mora Maxima`[i] == 0){
+    df$`Rango Maximo`[i] = "000-000"
+    
+  }else if (df$`Mora Maxima`[i] >= 1 && df$`Mora Maxima`[i] <= 30){
+    df$`Rango Maximo`[i] = "001-030"  
+    
+  }else if (df$`Mora Maxima`[i] >= 31 && df$`Mora Maxima`[i] <= 60){
+    df$`Rango Maximo`[i] = "031-060"  
+    
+  }else if (df$`Mora Maxima`[i] >= 61 && df$`Mora Maxima`[i] <= 90){
+    df$`Rango Maximo`[i] = "061-090"  
+    
+  }else if (df$`Mora Maxima`[i] >= 91 && df$`Mora Maxima`[i] <= 120){
+    df$`Rango Maximo`[i] = "091-120"  
+    
+  }else if (df$`Mora Maxima`[i] >= 121 && df$`Mora Maxima`[i] <= 150){
+    df$`Rango Maximo`[i] = "121-150"  
+    
+  }else if (df$`Mora Maxima`[i] >= 151 && df$`Mora Maxima`[i] <= 180){
+    df$`Rango Maximo`[i] = "151-180"
+    
+  }else if (df$`Mora Maxima`[i] >= 181 && df$`Mora Maxima`[i] <= 210){
+    df$`Rango Maximo`[i] = "181-210"  
+    
+  }else if (df$`Mora Maxima`[i] >= 211 && df$`Mora Maxima`[i] <= 240){
+    df$`Rango Maximo`[i] = "211-240"  
+    
+  }else if (df$`Mora Maxima`[i] >= 241 && df$`Mora Maxima`[i] <= 270){
+    df$`Rango Maximo`[i] = "241-270"  
+    
+  }else if (df$`Mora Maxima`[i] >= 271 && df$`Mora Maxima`[i] <= 300){
+    df$`Rango Maximo`[i] = "271-300"  
+    
+  }else if (df$`Mora Maxima`[i] >= 301 && df$`Mora Maxima`[i] <= 330){
+    df$`Rango Maximo`[i] = "301-330"  
+    
+  }else if (df$`Mora Maxima`[i] >= 331 && df$`Mora Maxima`[i] <= 360){
+    df$`Rango Maximo`[i] = "331-360"  
+    
+  }else{
+    df$`Rango Maximo`[i] = "Mayor a 360"
+  }
+}
+
+
+#***************************************CREANDO LA TABLA DINAMICA PARA COMPARAR***********************************
+#***************************************RANGO INICIAL - RANGO MAXIMO**********************************************
+rpivotTable(df, rows="Rango Inicial", col="Rango Maximo", aggregatorName="Average", vals="value")
 
